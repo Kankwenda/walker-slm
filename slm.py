@@ -25,6 +25,17 @@ def load_model(path=MODEL_PATH):
     return _llm
 
 
+def close():
+    """Ferme proprement le modèle (évite une erreur à la fermeture du programme)."""
+    global _llm
+    if _llm is not None:
+        try:
+            _llm.close()
+        except Exception:
+            pass
+        _llm = None
+
+
 def answer(question, context="", max_tokens=MAX_TOKENS):
     """Répond à la question à partir du contexte (extraits RAG)."""
     llm = load_model()
@@ -40,5 +51,6 @@ def answer(question, context="", max_tokens=MAX_TOKENS):
         temperature=TEMPERATURE,
         top_p=TOP_P,
         max_tokens=max_tokens,
+        repeat_penalty=1.1,
     )
     return out["choices"][0]["message"]["content"].strip()
