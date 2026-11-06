@@ -48,10 +48,38 @@ pip install -r requirements.txt
 python download_model.py   # ~219 Mo, une seule fois
 ```
 
-Sur Termux (Android), `llama-cpp-python` n'a pas de version précompilée :
-il faut le compiler (`pkg install cmake clang python`, puis
-`pip install llama-cpp-python`, c'est long) ou utiliser le binaire
-`llama-server` des releases llama.cpp.
+## Sur téléphone (Termux)
+
+Installe Termux depuis **F-Droid** (pas le Play Store : sa version est
+ancienne et cassée). Travaille dans le dossier d'accueil de Termux (`~`),
+pas dans `/sdcard` (Android y bloque l'exécution des programmes).
+
+**Option rapide — tester juste le modèle :**
+
+```bash
+pkg update && pkg upgrade -y
+pkg install -y llama-cpp
+curl -L -o model.gguf https://huggingface.co/bartowski/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q4_0.gguf
+sha256sum model.gguf   # doit donner c3608933eb6e5763b87f769bda40c204dc158333668c7af214644fe39da58627
+llama-cli -m model.gguf -p "Quelle est la capitale de la RDC ?"
+```
+
+**Option complète — faire tourner le projet (RAG web + API) :**
+
+```bash
+pkg update && pkg upgrade -y
+pkg install -y python git clang cmake make
+git clone https://github.com/Kankwenda/walker-slm.git
+cd walker-slm
+pip install -r requirements.txt   # compile llama-cpp-python : long (20 à 30 min), une seule fois
+python download_model.py          # ~219 Mo, une seule fois
+python chat.py "Quelle est la capitale de la RDC ?"
+```
+
+Fais ça en Wi-Fi si tu peux : outils + modèle = plusieurs centaines de Mo.
+Branche le téléphone pendant la compilation, ça chauffe et ça prend du
+temps. Si la compilation échoue, essaie d'abord
+`pkg install -y ninja libandroid-execinfo` puis relance `pip install`.
 
 ## Utilisation
 
