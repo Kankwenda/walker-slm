@@ -164,6 +164,32 @@ Attention : une clé écrite dans une page HTML est visible par quiconque
 lit le code de la page. Pour un usage perso en local, pas de souci. Ne
 publie pas une page qui contient ta clé.
 
+### Sur d'autres machines
+
+**Installer le projet ailleurs :** mêmes étapes que sur ton téléphone ou
+ton PC (`git clone`, `pip install -r requirements.txt`,
+`python download_model.py`, puis `python chat.py` ou `uvicorn`). Le modèle
+(~378 Mo) se télécharge une fois par machine, en Wi-Fi de préférence.
+
+**Appeler l'API depuis une autre machine sur le même Wi-Fi :** lance le
+serveur en écoutant tout le réseau :
+
+```bash
+uvicorn app:app --host 0.0.0.0 --port 8000
+```
+
+Puis, depuis l'autre machine, appelle `http://<adresse-IP>:8000/chat`
+avec ta clé API (en-tête `X-API-Key`). Pour trouver l'adresse IP du
+téléphone : dans Termux, `ifconfig` (ligne `inet`), ou dans les réglages
+Wi-Fi du téléphone. Protège toujours l'API avec ta clé quand elle est
+ouverte sur le réseau.
+
+Pour y accéder depuis internet (hors Wi-Fi), il faut un tunnel (par ex.
+ngrok ou Cloudflare Tunnel) ou un petit serveur VPS — le téléphone n'est
+pas joignable directement depuis internet. Sur Android, pense aussi à
+garder Termux éveillé (`termux-wake-lock`, paquet `termux-api`) sinon
+le système peut couper le serveur quand le téléphone dort.
+
 ## Comment marche le RAG (sans base)
 
 1. Recherche web (DuckDuckGo, sans clé API) : 5 résultats.
