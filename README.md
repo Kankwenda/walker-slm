@@ -104,6 +104,32 @@ curl -X POST http://127.0.0.1:8000/chat \
 
 Réponse : `{"answer": "...", "sources": [{"title": ..., "url": ...}], "model": "SmolLM2-360M-Instruct-Q4_0.gguf"}`
 
+### Clé API (optionnelle)
+
+Par défaut, l'API locale n'a pas de clé : elle n'écoute que sur ton
+appareil (`127.0.0.1`), donc tes projets sur le même téléphone/PC
+l'appellent sans clé.
+
+Pour la protéger (par exemple si tu l'exposes à d'autres appareils),
+définis une clé avant de lancer le serveur :
+
+```bash
+export WALKER_SLM_API_KEY="ta-clé-secrète"
+uvicorn app:app --host 127.0.0.1 --port 8000
+```
+
+Ensuite chaque appel à `/chat` doit envoyer l'en-tête `X-API-Key` :
+
+```bash
+curl -X POST http://127.0.0.1:8000/chat \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: ta-clé-secrète" \
+  -d '{"question": "Quelle est la capitale de la RDC ?"}'
+```
+
+Sans la bonne clé, `/chat` répond `401`. Sans la variable
+`WALKER_SLM_API_KEY`, l'API reste ouverte en local.
+
 ## Comment marche le RAG (sans base)
 
 1. Recherche web (DuckDuckGo, sans clé API) : 5 résultats.
