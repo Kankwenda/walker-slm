@@ -1,12 +1,12 @@
 # Walker SLM
 
 Petit modèle de langue compressé + RAG web, sans base de connaissances.
-Une API locale libre, sans quota, qui tient dans environ 220 Mo.
+Une API locale libre, sans quota, qui tient dans environ 380 Mo.
 
 ## En deux mots
 
-Walker SLM fait tourner un tout petit modèle (360 millions de paramètres,
-compressé à **219 Mo**) sur ton propre ordinateur ou téléphone. Il n'a pas
+Walker SLM fait tourner un tout petit modèle (600 millions de paramètres,
+compressé à **378 Mo**) sur ton propre ordinateur ou téléphone. Il n'a pas
 de base de connaissances intégrée : à chaque question, il cherche sur le web,
 lit les pages trouvées et répond en français à partir de ces extraits. Tu
 peux aussi lui donner tes propres documents (fichiers `.txt` / `.md` dans
@@ -14,27 +14,29 @@ peux aussi lui donner tes propres documents (fichiers `.txt` / `.md` dans
 
 ## Le modèle
 
-- **SmolLM2-360M-Instruct**, quantifié `Q4_0` (GGUF)
-- **Taille : 229 733 280 octets (~219 Mo)**, vérifié sur Hugging Face
-- Licence Apache-2.0 — https://huggingface.co/bartowski/SmolLM2-360M-Instruct-GGUF
+- **Qwen3-0.6B-Instruct**, quantifié `Q4_K_M` (GGUF)
+- **Taille : 396 705 472 octets (~378 Mo)**, vérifié sur Hugging Face
+- Licence Apache-2.0 — https://huggingface.co/unsloth/Qwen3-0.6B-GGUF
+  (conversion Unsloth du modèle Qwen3 d'Alibaba)
 - Téléchargé au premier lancement depuis Hugging Face (il n'est pas dans le dépôt)
 
-> Pourquoi le 360M ? Le 135M-Q8_0 (138 Mo) a été testé en direct le
-> 6 novembre 2026 : il répétait la question, copiait des bouts de pages ou
-> tournait en boucle. Le 360M répond en français aux questions simples.
-> C'est le plus petit modèle qui répond vraiment.
+> Pourquoi Qwen3 ? SmolLM2-360M (219 Mo) a été testé en direct le
+> 6 novembre 2026 : il répondait aux questions simples, mais dérivait et
+> inventait trop (ex. capitale de la RDC = « l'université »). Qwen3-0.6B
+> est nettement meilleur en français et en raisonnement, pour 378 Mo —
+> encore raisonnable sur téléphone.
 
 ## Limites honnêtes
 
-- Un modèle de 360M reste très petit : il répond bien aux questions simples
-  en français, mais il peut dériver ou répéter la même phrase en boucle sur
-  les réponses longues. Le RAG web l'aide beaucoup (il reformule des textes
-  trouvés en français), mais ne fait pas de miracles.
+- Un modèle de 0.6B reste petit : il répond bien mieux que le 360M, mais
+  il peut encore se tromper ou dériver sur les questions difficiles. Le RAG
+  web l'aide beaucoup (il reformule des textes trouvés en français), mais
+  ne fait pas de miracles. Vérifie toujours les réponses importantes.
 - Ce n'est pas un remplaçant des grosses API gratuites (Groq, Gemini) pour
   la qualité. En revanche : c'est à toi, sans compte, sans quota journalier,
   et ça tourne hors-ligne une fois le modèle téléchargé (sans le web, bien sûr).
 - GitHub héberge le code uniquement : un fichier ne peut pas dépasser
-  100 Mo sur GitHub, donc le modèle (219 Mo) se télécharge depuis Hugging
+  100 Mo sur GitHub, donc le modèle (378 Mo) se télécharge depuis Hugging
   Face au premier lancement. GitHub ne fait pas tourner le modèle : il faut
   un ordinateur, un téléphone (Termux) ou un petit serveur.
 
@@ -45,7 +47,7 @@ git clone https://github.com/Kankwenda/walker-slm.git
 cd walker-slm
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python download_model.py   # ~219 Mo, une seule fois
+python download_model.py   # ~378 Mo, une seule fois
 ```
 
 ## Sur téléphone (Termux)
@@ -59,8 +61,8 @@ pas dans `/sdcard` (Android y bloque l'exécution des programmes).
 ```bash
 pkg update && pkg upgrade -y
 pkg install -y llama-cpp
-curl -L -o model.gguf https://huggingface.co/bartowski/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q4_0.gguf
-sha256sum model.gguf   # doit donner c3608933eb6e5763b87f769bda40c204dc158333668c7af214644fe39da58627
+curl -L -o model.gguf https://huggingface.co/unsloth/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q4_K_M.gguf
+sha256sum model.gguf   # doit donner ac2d97712095a558e31573f62f466a3f9d93990898b0ec79d7c974c1780d524a
 llama-cli -m model.gguf -p "Quelle est la capitale de la RDC ?"
 ```
 
@@ -72,7 +74,7 @@ pkg install -y python git clang cmake make
 git clone https://github.com/Kankwenda/walker-slm.git
 cd walker-slm
 pip install -r requirements.txt   # compile llama-cpp-python : long (20 à 30 min), une seule fois
-python download_model.py          # ~219 Mo, une seule fois
+python download_model.py          # ~378 Mo, une seule fois
 python chat.py "Quelle est la capitale de la RDC ?"
 ```
 
@@ -102,7 +104,7 @@ curl -X POST http://127.0.0.1:8000/chat \
   -d '{"question": "Quelle est la capitale de la RDC ?"}'
 ```
 
-Réponse : `{"answer": "...", "sources": [{"title": ..., "url": ...}], "model": "SmolLM2-360M-Instruct-Q4_0.gguf"}`
+Réponse : `{"answer": "...", "sources": [{"title": ..., "url": ...}], "model": "Qwen3-0.6B-Q4_K_M.gguf"}`
 
 ### Clé API (optionnelle)
 
@@ -151,7 +153,9 @@ console.log(data.sources);  // les sources
 
 Le fichier `exemple.html` (à la racine du dépôt) est une page prête à
 l'emploi : ouvre-la dans ton navigateur, colle ta clé, pose ta question.
-Elle parle au serveur sur le même appareil (`127.0.0.1`). Pour appeler
+Le fichier `walker_chatbot.html` est une interface de chat mobile complète
+(bulles, historique, sources, clé gardée dans le navigateur).
+Elles parlent au serveur sur le même appareil (`127.0.0.1`). Pour appeler
 l'API depuis un autre appareil sur le même Wi-Fi, lance le serveur avec
 `--host 0.0.0.0` et utilise l'adresse IP Wi-Fi du téléphone/PC à la place
 de `127.0.0.1`.
@@ -183,6 +187,8 @@ walker-slm/
 ├── rag.py             # recherche web, découpage, classement
 ├── download_model.py  # téléchargement du modèle (taille + sha256 vérifiés)
 ├── config.py          # modèle, limites, chemins
+├── exemple.html       # page de test navigateur (fetch + clé API)
+├── walker_chatbot.html # interface chat mobile complète
 ├── requirements.txt
 ├── docs/              # tes documents (.txt/.md) pour le RAG local
 ├── models/            # le modèle téléchargé (ignoré par git)
@@ -191,5 +197,5 @@ walker-slm/
 
 ## Licence
 
-Code sous licence Apache-2.0. Modèle SmolLM2 sous licence Apache-2.0
+Code sous licence Apache-2.0. Modèle Qwen3 sous licence Apache-2.0
 (Hugging Face).

@@ -1,6 +1,6 @@
 """Télécharge le modèle GGUF depuis Hugging Face (premier lancement).
 
-Le modèle (~219 Mo) n'est pas dans le dépôt : GitHub refuse les fichiers
+Le modèle (~378 Mo) n'est pas dans le dépôt : GitHub refuse les fichiers
 de plus de 100 Mo. Il est téléchargé une seule fois, puis vérifié
 (taille + SHA-256).
 """
@@ -31,7 +31,7 @@ def main():
 
     os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
     print(f"Téléchargement : {MODEL_URL}")
-    print(f"Taille attendue : {MODEL_SIZE} octets (~219 Mo)")
+    print(f"Taille attendue : {MODEL_SIZE} octets (~378 Mo)")
 
     last = [0]
 
