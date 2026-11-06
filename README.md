@@ -130,6 +130,36 @@ curl -X POST http://127.0.0.1:8000/chat \
 Sans la bonne clé, `/chat` répond `401`. Sans la variable
 `WALKER_SLM_API_KEY`, l'API reste ouverte en local.
 
+### Dans un projet HTML (JavaScript)
+
+Oui : une page HTML peut appeler l'API avec `fetch` (le serveur autorise
+les appels depuis le navigateur). Exemple :
+
+```js
+const res = await fetch("http://127.0.0.1:8000/chat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "ta-clé-secrète"
+  },
+  body: JSON.stringify({ question: "Quelle est la capitale de la RDC ?" })
+});
+const data = await res.json();
+console.log(data.answer);   // la réponse
+console.log(data.sources);  // les sources
+```
+
+Le fichier `exemple.html` (à la racine du dépôt) est une page prête à
+l'emploi : ouvre-la dans ton navigateur, colle ta clé, pose ta question.
+Elle parle au serveur sur le même appareil (`127.0.0.1`). Pour appeler
+l'API depuis un autre appareil sur le même Wi-Fi, lance le serveur avec
+`--host 0.0.0.0` et utilise l'adresse IP Wi-Fi du téléphone/PC à la place
+de `127.0.0.1`.
+
+Attention : une clé écrite dans une page HTML est visible par quiconque
+lit le code de la page. Pour un usage perso en local, pas de souci. Ne
+publie pas une page qui contient ta clé.
+
 ## Comment marche le RAG (sans base)
 
 1. Recherche web (DuckDuckGo, sans clé API) : 5 résultats.

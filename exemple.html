@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walker SLM — test</title>
+<style>
+  body { font-family: sans-serif; max-width: 600px; margin: 2em auto; padding: 0 1em; }
+  input, button { font-size: 1em; padding: 0.5em; }
+  #question { width: 70%; }
+  #cle { width: 60%; }
+  #reponse { white-space: pre-wrap; margin-top: 1em; }
+  #sources { color: #555; font-size: 0.9em; }
+</style>
+</head>
+<body>
+<h1>Walker SLM</h1>
+<p>Le serveur doit tourner : <code>uvicorn app:app --host 127.0.0.1 --port 8000</code></p>
+<label>Ta clé API : <input id="cle" type="text" placeholder="TA-CLE-ICI"></label>
+<br><br>
+<input id="question" type="text" placeholder="Ta question..." value="Quelle est la capitale de la RDC ?">
+<button onclick="demander()">Demander</button>
+<p id="reponse"></p>
+<p id="sources"></p>
+<script>
+const API = "http://127.0.0.1:8000/chat";
+
+async function demander() {
+  const cle = document.getElementById("cle").value.trim();
+  const question = document.getElementById("question").value.trim();
+  const rep = document.getElementById("reponse");
+  const src = document.getElementById("sources");
+  rep.textContent = "Je cherche...";
+  src.textContent = "";
+  try {
+    const res = await fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": cle },
+      body: JSON.stringify({ question })
+    });
+    if (res.status === 401) { rep.textContent = "Clé refusée (401) : vérifie ta clé."; return; }
+    if (!res.ok) { rep.textContent = "Erreur " + res.status + " : le serveur est-il lancé ?"; return; }
+    const data = await res.json();
+    rep.textContent = data.answer;
+    src.textContent = data.sources.map(s => s.title).join(" | ");
+  } catch (e) {
+    rep.textContent = "Impossible de joindre le serveur. Lance-le d'abord : uvicorn app:app --host 127.0.0.1 --port 8000";
+  }
+}
+</script>
+</body>
+</html>

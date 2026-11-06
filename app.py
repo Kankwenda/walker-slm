@@ -8,6 +8,7 @@ valeur (sinon 401). Sans la variable, l'API reste ouverte en local.
 import os
 
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 import rag
@@ -15,6 +16,15 @@ import slm
 from config import HOST, MODEL_FILE, MODEL_PATH, PORT
 
 app = FastAPI(title="Walker SLM", version="1.0.0")
+
+# CORS : autorise les pages HTML (même ouvertes en local, file://) à
+# appeler l'API depuis le navigateur. L'API reste locale (127.0.0.1).
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 # Clé secrète lue au lancement (vide = pas de contrôle, usage local).
 API_KEY = os.environ.get("WALKER_SLM_API_KEY")
