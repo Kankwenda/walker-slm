@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walker Chatbot — SLM</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; }
+  header { padding: 1em; background: #1e293b; position: sticky; top: 0; }
+  header h1 { margin: 0; font-size: 1.2em; }
+  header p { margin: .3em 0 0; font-size: .85em; color: #94a3b8; }
+  #cle-zone { padding: .8em 1em; background: #1e293b; border-top: 1px solid #334155; display: flex; gap: .5em; }
+  #cle-zone input { flex: 1; min-width: 0; }
+  input, button { font-size: 1em; padding: .6em; border-radius: .5em; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; }
+  button { background: #2563eb; border-color: #2563eb; color: #fff; cursor: pointer; }
+  button:disabled { opacity: .5; }
+  #chat { padding: 1em; display: flex; flex-direction: column; gap: .7em; max-width: 700px; margin: 0 auto; padding-bottom: 7em; }
+  .msg { padding: .7em .9em; border-radius: .8em; max-width: 90%; white-space: pre-wrap; line-height: 1.45; }
+  .user { background: #2563eb; color: #fff; align-self: flex-end; }
+  .bot { background: #1e293b; align-self: flex-start; }
+  .err { background: #7f1d1d; align-self: flex-start; }
+  .src { font-size: .8em; color: #94a3b8; margin-top: .4em; }
+  #bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1e293b; padding: .8em; display: flex; gap: .5em; }
+  #bar input { flex: 1; min-width: 0; }
+  .hint { font-size: .8em; color: #94a3b8; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🤖 Walker Chatbot</h1>
+  <p>Ton SLM local (360M + recherche web). Réponses courtes — vérifie toujours ce qu'il dit, il peut inventer une réponse.</p>
+</header>
+<div id="cle-zone">
+  <input id="cle" type="password" placeholder="Ta clé API Walker SLM" autocomplete="off">
+  <button onclick="sauverCle()">OK</button>
+  <button onclick="tester()" title="Vérifier que le serveur tourne">Tester</button>
+</div>
+<div id="chat">
+  <div class="msg bot">Salut ! Pose-moi une question courte et simple. D'abord, lance le serveur dans Termux :
+<code>uvicorn app:app --host 127.0.0.1 --port 8000</code>
+(pense à mettre ta clé avec WALKER_SLM_API_KEY si tu en as défini une).</div>
+</div>
+<div id="bar">
+  <input id="question" type="text" placeholder="Ta question..." autocomplete="off">
+  <button id="envoyer" onclick="demander()">Envoyer</button>
+</div>
+
+<script>
+const API = "http://127.0.0.1:8000/chat";
+
+// La clé n'est JAMAIS écrite dans ce fichier : elle reste dans le
+// navigateur de ton téléphone (localStorage). Ne publie pas cette page
+// avec une clé dedans.
+const cleInput = document.getElementById("cle");
+cleInput.value = localStorage.getItem("walker_slm_key") || "";
+
+function sauverCle() {
+  localStorage.setItem("walker_slm_key", cleInput.value.trim());
+  ajouter("bot", "Clé enregistrée sur cet appareil uniquement. ✅");
+}
+
+function ajouter(type, texte, sources) {
+  const chat = document.getElementById("chat");
+  const div = document.createElement("div");
+  div.className = "msg " + type;
+  div.textContent = texte;
+  if (sources && sources.length) {
+    const s = document.createElement("div");
+    s.className = "src";
+    s.textContent = "Sources : " + sources.map(x => x.title || x.url || x).join(" | ");
+    div.appendChild(s);
+  }
+  chat.appendChild(div);
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
+async function tester() {
+  try {
+    const res = await fetch("http://127.0.0.1:8000/");
+    if (res.ok) { ajouter("bot", "Serveur joignable ✅ — tu peux poser ta question."); }
+    else { ajouter("err", "Serveur joignable mais erreur " + res.status + "."); }
+  } catch (e) {
+    ajouter("err", "Serveur introuvable ❌ — lance-le d'abord dans Termux :\nuvicorn app:app --host 127.0.0.1 --port 8000");
+  }
+}
+
+async function demander() {
+  const qInput = document.getElementById("question");
+  const question = qInput.value.trim();
+  if (!question) return;
+  const cle = cleInput.value.trim();
+  ajouter("user", question);
+  qInput.value = "";
+  const btn = document.getElementById("envoyer");
+  btn.disabled = true;
+  ajouter("bot", "Je cherche...");
+  const chat = document.getElementById("chat");
+  const attente = chat.lastChild;
+  try {
+    const res = await fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": cle },
+      // max_tokens bas : le 360M tourne en boucle sur les réponses longues.
+      body: JSON.stringify({ question, max_tokens: 256 })
+    });
+    attente.remove();
+    if (res.status === 401) { ajouter("err", "Clé refusée (401) : vérifie ta clé en haut, ou relance le serveur avec la bonne clé."); return; }
+    if (res.status === 503) { ajouter("err", "Modèle absent (503) : lance d'abord python download_model.py dans Termux."); return; }
+    if (!res.ok) { ajouter("err", "Erreur " + res.status + " : le serveur est-il lancé ?"); return; }
+    const data = await res.json();
+    ajouter("bot", data.answer || "(pas de réponse)", data.sources);
+  } catch (e) {
+    attente.remove();
+    ajouter("err", "Impossible de joindre le serveur. Lance-le d'abord dans Termux :\nuvicorn app:app --host 127.0.0.1 --port 8000");
+  } finally {
+    btn.disabled = false;
+    qInput.focus();
+  }
+}
+
+document.getElementById("question").addEventListener("keydown", e => {
+  if (e.key === "Enter") demander();
+});
+</script>
+</body>
+</html>
