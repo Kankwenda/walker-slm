@@ -184,11 +184,31 @@ téléphone : dans Termux, `ifconfig` (ligne `inet`), ou dans les réglages
 Wi-Fi du téléphone. Protège toujours l'API avec ta clé quand elle est
 ouverte sur le réseau.
 
-Pour y accéder depuis internet (hors Wi-Fi), il faut un tunnel (par ex.
-ngrok ou Cloudflare Tunnel) ou un petit serveur VPS — le téléphone n'est
-pas joignable directement depuis internet. Sur Android, pense aussi à
-garder Termux éveillé (`termux-wake-lock`, paquet `termux-api`) sinon
-le système peut couper le serveur quand le téléphone dort.
+**Rendre l'API publique gratuitement, sans carte bancaire
+(Cloudflare Tunnel) :** le téléphone n'est pas joignable directement
+depuis internet, mais un tunnel Cloudflare donne une adresse HTTPS
+publique à ton API — sans compte, sans carte, en une commande.
+
+```bash
+# Onglet Termux 1 — le serveur (local seulement, le tunnel s'en charge) :
+uvicorn app:app --host 127.0.0.1 --port 8000
+
+# Onglet Termux 2 — le tunnel :
+pkg install -y cloudflared
+cloudflared tunnel --url http://localhost:8000 --no-autoupdate
+```
+
+Cloudflare affiche alors une adresse du type
+`https://xxxx.trycloudflare.com` : c'est ton API, joignable de partout.
+Mets cette adresse dans tes pages HTML à la place de
+`http://<adresse-IP>:8000`, avec ta clé API en en-tête `X-API-Key`.
+
+Limites honnêtes : l'adresse change à chaque redémarrage du tunnel (il
+faut la recopier dans tes pages) ; le téléphone doit rester allumé et
+Termux éveillé (`termux-wake-lock`, paquet `termux-api`) sinon le
+serveur et le tunnel s'arrêtent ; l'adresse est publique, donc garde
+toujours ta clé API active. Un VPS (Oracle Cloud Free Tier) reste la
+solution stable, mais il demande une carte bancaire.
 
 ## Comment marche le RAG (sans base)
 
