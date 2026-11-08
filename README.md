@@ -198,6 +198,14 @@ pkg install -y cloudflared
 cloudflared tunnel --url http://localhost:8000 --no-autoupdate
 ```
 
+Ou en une seule commande, avec ta clé API (le script lance le serveur,
+attend qu'il réponde, puis lance le tunnel) :
+
+```bash
+cd ~/walker-slm
+WALKER_SLM_API_KEY='ta-cle' bash termux/start-cloudflare.sh
+```
+
 Cloudflare affiche alors une adresse du type
 `https://xxxx.trycloudflare.com` : c'est ton API, joignable de partout.
 Mets cette adresse dans tes pages HTML à la place de
